@@ -77,10 +77,19 @@ jobs:
             echo "Waiting 30 seconds for services to initialize..."
             sleep 30
 
+            # Wait for frontend to be fully ready
+            echo "Waiting for frontend to be ready..."
+            sleep 10
+
             # Setup SSL certificates if they don't exist
             echo "Checking SSL certificates..."
             if [ ! -f "./certbot/conf/live/immigrationai.website/fullchain.pem" ]; then
               echo "SSL certificates not found. Obtaining from Let's Encrypt..."
+
+              # Stop certbot container if it's running
+              docker compose stop certbot || true
+
+              # Run certbot manually after frontend is ready
               docker compose run --rm certbot certonly \
                 --webroot \
                 --webroot-path=/var/www/certbot \
