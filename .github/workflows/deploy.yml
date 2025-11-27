@@ -103,8 +103,4 @@ jobs:
             echo "Checking service status..."
             docker compose ps
 
-            # Build LEANN index
-            echo "Building LEANN index from documents..."
-            docker compose exec -T backend python3 /app/src/utils/leann_converter.py || true
-
             echo "Deployment complete!"
