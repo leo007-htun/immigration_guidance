@@ -1,29 +1,35 @@
-# Build stage
+# ===============================
+# Stage 1: Build React application
+# ===============================
 FROM node:18-alpine as build
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy source code
+# Copy source code and build the app
 COPY . .
-
-# Build the application
 RUN npm run build
 
-# Production stage
+# ===============================
+# Stage 2: Serve with Nginx
+# ===============================
 FROM nginx:alpine
 
 # Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy nginx configuration
+# Copy custom Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# SSL certificates from certbot (mounted as volumes in docker-compose)
+# Example: /etc/letsencrypt/live/yourdomain/fullchain.pem
+# Make sure docker-compose mounts ./certbot/conf:/etc/letsencrypt
 
+EXPOSE 80
+EXPOSE 443
+
+# Run Nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
