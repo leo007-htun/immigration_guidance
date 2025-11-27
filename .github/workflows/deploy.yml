@@ -18,8 +18,11 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           debug: true
+          command_timeout: 40m
+          script_stop: true
           script: |
             set -euo pipefail
+            echo "== connected =="; whoami || true; uname -a || true; date
 
             # Detect docker compose command
             if docker compose version >/dev/null 2>&1; then
@@ -30,66 +33,70 @@ jobs:
               echo "❌ Neither 'docker compose' nor 'docker-compose' installed"; exit 1
             fi
 
-            APP_PATH="${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
-            REPO="git@github.com:leo007-htun/immigration_guidance.git"
+            REPO_PATH="${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
+            mkdir -p "$REPO_PATH"
 
             # Clone repo if missing
-            if [ ! -d "$APP_PATH/.git" ]; then
-              echo "Folder does not exist, creating and cloning repo..."
-              mkdir -p "$APP_PATH"
-              git clone "$REPO" "$APP_PATH"
+            if [ ! -d "$REPO_PATH/.git" ]; then
+              git clone git@github.com:leo007-htun/immigration_guidance.git "$REPO_PATH"
             fi
 
-            cd "$APP_PATH"
+            cd "$REPO_PATH"
+            git fetch --all --prune
+            git reset --hard origin/main
 
-            # Reset and pull latest code
-            echo "Pulling latest code..."
-            git reset --hard
-            git clean -fd
-            git pull origin main
+            # Detect compose file
+            COMPOSE_FILE=""
+            for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
+              if [ -f "$f" ]; then COMPOSE_FILE="$f"; break; fi
+            done
+            if [ -z "$COMPOSE_FILE" ]; then
+              echo "❌ No compose file found"; ls -la; exit 1
+            fi
+            $COMPOSE -f "$COMPOSE_FILE" config >/dev/null
 
-            # Generate .env file (without extra indentation)
-            echo "Generating .env file..."
-            cat > .env <<EOF
-            ADMIN_KEY=${{ secrets.ADMIN_KEY }}
-            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-            DATABASE_USER=${{ secrets.DATABASE_USER }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            ORG_ID=${{ secrets.ORG_ID }}
-            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-            EOF
+            # Generate .env file
+            cat <<EOF > .env
+ADMIN_KEY=${{ secrets.ADMIN_KEY }}
+DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+DATABASE_USER=${{ secrets.DATABASE_USER }}
+OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+ORG_ID=${{ secrets.ORG_ID }}
+POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+EOF
+
+            # Optional: Clean up dangling containers/images before build
+            echo "Pruning old containers, images, and build cache..."
+            $COMPOSE -f "$COMPOSE_FILE" down --remove-orphans || true
+            docker system prune -af --volumes || true
 
             # Build Docker images
             echo "Building Docker images..."
-            $COMPOSE build
-
-            # Stop old containers
-            echo "Stopping old containers..."
-            $COMPOSE down --remove-orphans
-
-            # Prune only dangling images (safer)
-            echo "Pruning dangling Docker images..."
-            docker image prune -f
+            $COMPOSE -f "$COMPOSE_FILE" build --no-cache
 
             # Start services
             echo "Starting services..."
-            $COMPOSE up -d --remove-orphans
+            $COMPOSE -f "$COMPOSE_FILE" up -d --remove-orphans
 
             # Wait for services
             echo "Waiting 30 seconds for services to initialize..."
             sleep 30
 
             # Check service status
-            echo "Checking service status..."
-            $COMPOSE ps
+            $COMPOSE -f "$COMPOSE_FILE" ps || true
 
             # Build LEANN index
             echo "Building LEANN index from documents..."
-            $COMPOSE exec -T backend python3 /app/src/utils/leann_converter.py || true
+            $COMPOSE -f "$COMPOSE_FILE" exec -T backend python3 /app/src/utils/leann_converter.py || true
+
+            # Final cleanup: remove unused images and cache
+            echo "Final cleanup of Docker images and cache..."
+            docker image prune -af || true
+            docker builder prune -af || true
 
             echo "Deployment complete!"
