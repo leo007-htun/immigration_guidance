@@ -62,8 +62,8 @@ jobs:
 
             # Create certbot directories with proper permissions
             echo "Creating certbot directories..."
-            mkdir -p ./certbot/conf ./certbot/www
-            chmod -R 755 ./certbot
+            mkdir -p ./certbot/conf ./certbot/www/.well-known/acme-challenge
+            chmod -R 777 ./certbot/www
 
             # Build Docker images with reduced parallelism to avoid OOM
             echo "Building Docker images (low memory mode)..."
