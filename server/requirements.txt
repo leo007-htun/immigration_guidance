@@ -1,5 +1,3 @@
-intel-openmp
-mkl
 llama-index
 memorisdk
 mysql-connector-python

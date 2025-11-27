@@ -12,6 +12,10 @@ done
 
 >&2 echo "PostgreSQL is up - continuing"
 
+# Initialize database tables if they don't exist
+echo "Initializing database tables..."
+bash /app/db/create_userdb.sh || true
+
 # Check if admin user exists, if not create it
 echo "Checking admin user..."
 python3 <<EOF

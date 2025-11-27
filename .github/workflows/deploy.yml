@@ -11,51 +11,30 @@ jobs:
 
     steps:
       - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.2.0
+        uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
-          debug: true
-          command_timeout: 40m
-          script_stop: true
           script: |
-            set -euo pipefail
-            echo "== connected =="; whoami; uname -a; date
-
-            # Detect docker compose
-            if docker compose version >/dev/null 2>&1; then
-              COMPOSE="docker compose"
-            elif command -v docker-compose >/dev/null 2>&1; then
-              COMPOSE="docker-compose"
-            else
-              echo "❌ Neither 'docker compose' nor 'docker-compose' installed"; exit 1
+            # Navigate to deployment path, create if missing
+            if [ ! -d "${{ secrets.APP_PATH || '/root/immigration_guidance' }}" ]; then
+              echo "Folder does not exist, creating and cloning repo..."
+              mkdir -p "${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
+              git clone git@github.com:leo007-htun/immigration_guidance.git "${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
             fi
 
-            REPO_PATH="${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
-            mkdir -p "$REPO_PATH"
+            cd ${{ secrets.APP_PATH || '/root/immigration_guidance' }}
 
-            # Clone repo if missing
-            if [ ! -d "$REPO_PATH/.git" ]; then
-              git clone git@github.com:leo007-htun/immigration_guidance.git "$REPO_PATH"
-            fi
+            # Pull latest code
+            echo "Pulling latest code..."
+            git reset --hard
+            git clean -fd
+            git pull origin main
 
-            cd "$REPO_PATH"
-            git fetch --all --prune
-            git reset --hard origin/main
-
-            # Detect compose file
-            COMPOSE_FILE=""
-            for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
-              if [ -f "$f" ]; then COMPOSE_FILE="$f"; break; fi
-            done
-            if [ -z "$COMPOSE_FILE" ]; then
-              echo "❌ No compose file found"; ls -la; exit 1
-            fi
-            $COMPOSE -f "$COMPOSE_FILE" config >/dev/null
-
-            # Generate .env file
+            # Create .env from GitHub secrets
+            echo "Generating .env file..."
             cat <<EOF > .env
             ADMIN_KEY=${{ secrets.ADMIN_KEY }}
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
@@ -70,24 +49,54 @@ jobs:
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             EOF
 
-            # Clean up dangling containers/images before build
-            echo "Pruning old containers, images, and build cache..."
-            $COMPOSE -f "$COMPOSE_FILE" down --remove-orphans || true
-            docker system prune -af --volumes || true
+            # Stop old containers first to free memory
+            echo "Stopping old containers..."
+            docker compose down
 
-            # Build Docker images
-            echo "Building Docker images..."
-            $COMPOSE -f "$COMPOSE_FILE" build --no-cache
+            # Clean up to free memory before building
+            echo "Cleaning up old images to free memory..."
+            docker image prune -af || true
+
+            # Build Docker images with reduced parallelism to avoid OOM
+            echo "Building Docker images (low memory mode)..."
+            DOCKER_BUILDKIT=1 docker compose build --memory 512m
 
             # Start services
             echo "Starting services..."
-            $COMPOSE -f "$COMPOSE_FILE" up -d --remove-orphans
+            docker compose up -d
 
-            # Wait for services
+            # Wait for services to become healthy
             echo "Waiting 30 seconds for services to initialize..."
             sleep 30
 
+            # Setup SSL certificates if they don't exist
+            echo "Checking SSL certificates..."
+            if [ ! -f "./certbot/conf/live/immigrationai.website/fullchain.pem" ]; then
+              echo "SSL certificates not found. Obtaining from Let's Encrypt..."
+              docker compose run --rm certbot certonly \
+                --webroot \
+                --webroot-path=/var/www/certbot \
+                --email admin@immigrationai.website \
+                --agree-tos \
+                --no-eff-email \
+                -d immigrationai.website \
+                -d www.immigrationai.website || echo "SSL cert generation failed - continuing with HTTP"
+
+              # Restart frontend to pick up new certs
+              if [ -f "./certbot/conf/live/immigrationai.website/fullchain.pem" ]; then
+                echo "SSL certificates obtained! Restarting frontend..."
+                docker compose restart frontend
+              fi
+            else
+              echo "SSL certificates already exist"
+            fi
+
             # Check service status
-            $COMPOSE -f "$COMPOSE_FILE" ps || true
+            echo "Checking service status..."
+            docker compose ps
+
+            # Build LEANN index
+            echo "Building LEANN index from documents..."
+            docker compose exec -T backend python3 /app/src/utils/leann_converter.py || true
 
             echo "Deployment complete!"

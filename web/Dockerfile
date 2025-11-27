@@ -18,18 +18,23 @@ RUN npm run build
 # ===============================
 FROM nginx:alpine
 
+# Install required packages
+RUN apk add --no-cache bash
+
 # Copy built assets from build stage
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Create nginx templates directory
+RUN mkdir -p /etc/nginx/templates
 
-# SSL certificates from certbot (mounted as volumes in docker-compose)
-# Example: /etc/letsencrypt/live/yourdomain/fullchain.pem
-# Make sure docker-compose mounts ./certbot/conf:/etc/letsencrypt
+# Copy both nginx configurations as templates
+COPY nginx.conf /etc/nginx/templates/nginx-ssl.conf
+COPY nginx-nossl.conf /etc/nginx/templates/nginx-nossl.conf
 
-EXPOSE 80
-EXPOSE 443
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# Run Nginx in foreground
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80 443
+
+ENTRYPOINT ["/docker-entrypoint.sh"]
