@@ -123,8 +123,8 @@ memori = Memori(model="gpt-4o-mini", conscious_ingest=True)
 ## 🔐 Admin Dashboard
 
 Access at `/admin` with credentials:
-- Email: `admin@hotmail.com`
-- Password: `admin` (change after first login!)
+- Email: `...`
+- Password: `...` (change after first login!)
 
 Features:
 - **System Stats**: Users, conversations, memory metrics
