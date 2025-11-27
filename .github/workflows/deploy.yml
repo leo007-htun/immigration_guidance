@@ -18,9 +18,23 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
           script: |
+            # Navigate to deployment path, create if missing
+            if [ ! -d "${{ secrets.APP_PATH || '/root/immigration_guidance' }}" ]; then
+              echo "Folder does not exist, creating and cloning repo..."
+              mkdir -p "${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
+              git clone git@github.com:leo007-htun/immigration_guidance.git "${{ secrets.APP_PATH || '/root/immigration_guidance' }}"
+            fi
+
             cd ${{ secrets.APP_PATH || '/root/immigration_guidance' }}
 
-            # Create .env file from GitHub secrets
+            # Pull latest code
+            echo "Pulling latest code..."
+            git reset --hard
+            git clean -fd
+            git pull origin main
+
+            # Create .env from GitHub secrets
+            echo "Generating .env file..."
             cat <<EOF > .env
             ADMIN_KEY=${{ secrets.ADMIN_KEY }}
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
@@ -35,27 +49,31 @@ jobs:
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             EOF
 
-            echo "Pulling latest code..."
-            git pull origin main
-
+            # Build Docker images
             echo "Building Docker images..."
-            docker-compose build --no-cache
+            docker compose build --no-cache
 
+            # Stop old containers
             echo "Stopping old containers..."
-            docker-compose down
+            docker compose down
 
+            # Start services
             echo "Starting services..."
-            docker-compose up -d
+            docker compose up -d
 
-            echo "Waiting for services to be healthy..."
+            # Wait for services to become healthy
+            echo "Waiting 30 seconds for services to initialize..."
             sleep 30
 
+            # Check service status
             echo "Checking service status..."
-            docker-compose ps
+            docker compose ps
 
+            # Build LEANN index
             echo "Building LEANN index from documents..."
-            docker-compose exec -T backend python3 /app/src/utils/leann_converter.py || true
+            docker compose exec -T backend python3 /app/src/utils/leann_converter.py || true
 
+            # Clean up old Docker images
             echo "Cleaning up old images..."
             docker image prune -f
 
