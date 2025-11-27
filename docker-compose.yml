@@ -34,12 +34,15 @@ services:
       - DATABASE_NAME=userdb
       - DATABASE_USER=useradmin
       - DATABASE_PASSWORD=userdb1234
+      - PYTHONPATH=/usr/local/lib/python3.10/dist-packages:/app
     env_file:
       - .env
     volumes:
       - ./data:/app/data
       - ./src:/app/src
       - ./.env:/app/.env
+      # Mount VPS Python packages (leann, torch) to save RAM
+      - /usr/local/lib/python3.10/dist-packages:/usr/local/lib/python3.10/dist-packages:ro
     ports:
       - "3001:3001"
     depends_on:

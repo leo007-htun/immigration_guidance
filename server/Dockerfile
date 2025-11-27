@@ -13,16 +13,12 @@ RUN apt-get update && apt-get install -y \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
-# Install CPU-only PyTorch first (to avoid CUDA bloat)
-RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
-
-# Install leann (will use the already-installed CPU torch)
-RUN pip install --no-cache-dir --no-deps leann && \
-    pip install --no-cache-dir numpy scipy scikit-learn tqdm
-
-# Copy requirements and install other Python packages
+# Copy requirements and install Python packages (excluding leann/torch which are mounted from host)
 COPY server/requirements.txt /app/server/requirements.txt
 RUN pip install --no-cache-dir -r /app/server/requirements.txt
+
+# Note: leann and torch are mounted from VPS host at /usr/local/lib/python3.10/dist-packages
+# This saves ~2GB RAM during build and runtime
 
 # Copy application code
 COPY server/ /app/server/
