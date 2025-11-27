@@ -57,18 +57,18 @@ jobs:
 
             # Generate .env file
             cat <<EOF > .env
-ADMIN_KEY=${{ secrets.ADMIN_KEY }}
-DATABASE_HOST=${{ secrets.DATABASE_HOST }}
-DATABASE_NAME=${{ secrets.DATABASE_NAME }}
-DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-DATABASE_PORT=${{ secrets.DATABASE_PORT }}
-DATABASE_USER=${{ secrets.DATABASE_USER }}
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-ORG_ID=${{ secrets.ORG_ID }}
-POSTGRES_DB=${{ secrets.POSTGRES_DB }}
-POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-POSTGRES_USER=${{ secrets.POSTGRES_USER }}
-EOF
+            ADMIN_KEY=${{ secrets.ADMIN_KEY }}
+            DATABASE_HOST=${{ secrets.DATABASE_HOST }}
+            DATABASE_NAME=${{ secrets.DATABASE_NAME }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            DATABASE_PORT=${{ secrets.DATABASE_PORT }}
+            DATABASE_USER=${{ secrets.DATABASE_USER }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+            ORG_ID=${{ secrets.ORG_ID }}
+            POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+            POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+            POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+            EOF
 
             # Optional: Clean up dangling containers/images before build
             echo "Pruning old containers, images, and build cache..."
