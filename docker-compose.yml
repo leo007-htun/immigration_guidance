@@ -1,7 +1,6 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: leann-postgres
@@ -22,7 +21,6 @@ services:
     networks:
       - leann-network
 
-  # FastAPI Backend
   backend:
     build:
       context: .
@@ -54,7 +52,6 @@ services:
       - leann-network
     restart: unless-stopped
 
-  # React Frontend with Nginx
   frontend:
     build:
       context: ./web
@@ -65,25 +62,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
     depends_on:
       - backend
     networks:
       - leann-network
     restart: unless-stopped
-
-  # Certbot for SSL certificate management
-  certbot:
-    image: certbot/certbot:latest
-    container_name: leann-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
-    networks:
-      - leann-network
 
 volumes:
   postgres_data:
