@@ -1,0 +1,47 @@
+name: Deploy to IONOS VPS
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            cd ${{ secrets.APP_PATH || '/root/leann' }}
+
+            echo "Pulling latest code..."
+            git pull origin main
+
+            echo "Building Docker images..."
+            docker-compose build --no-cache
+
+            echo "Stopping old containers..."
+            docker-compose down
+
+            echo "Starting services..."
+            docker-compose up -d
+
+            echo "Waiting for services to be healthy..."
+            sleep 30
+
+            echo "Checking service status..."
+            docker-compose ps
+
+            echo "Building LEANN index from documents..."
+            docker-compose exec -T backend python3 /app/src/utils/leann_converter.py || true
+
+            echo "Cleaning up old images..."
+            docker image prune -f
+
+            echo "Deployment complete!"
