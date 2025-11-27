@@ -60,6 +60,11 @@ jobs:
             docker volume prune -f || true
             docker system prune -af --volumes || true
 
+            # Create certbot directories with proper permissions
+            echo "Creating certbot directories..."
+            mkdir -p ./certbot/conf ./certbot/www
+            chmod -R 755 ./certbot
+
             # Build Docker images with reduced parallelism to avoid OOM
             echo "Building Docker images (low memory mode)..."
             DOCKER_BUILDKIT=1 docker compose build --memory 512m
