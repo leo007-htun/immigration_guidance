@@ -1,0 +1,23 @@
+{
+  "version": "1.0",
+  "backend_name": "hnsw",
+  "embedding_model": "text-embedding-3-small",
+  "dimensions": 1536,
+  "backend_kwargs": {
+    "is_compact": false,
+    "is_recompute": false,
+    "distance_metric": "cosine"
+  },
+  "embedding_mode": "openai",
+  "passage_sources": [
+    {
+      "type": "jsonl",
+      "path": "index.passages.jsonl",
+      "index_path": "index.passages.idx",
+      "path_relative": "index.passages.jsonl",
+      "index_path_relative": "index.passages.idx"
+    }
+  ],
+  "is_compact": false,
+  "is_pruned": false
+}

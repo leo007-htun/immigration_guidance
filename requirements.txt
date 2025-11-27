@@ -1,0 +1,14 @@
+intel-openmp
+mkl
+llama-index
+memorisdk
+mysql-connector-python
+fastapi
+uvicorn[standard]
+pydantic[email]
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+python-dotenv
+PyJWT
+psycopg2-binary
