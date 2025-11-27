@@ -13,13 +13,16 @@ RUN apt-get update && apt-get install -y \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip
 
+# Install CPU-only PyTorch first (to avoid CUDA bloat)
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# Install leann (will use the already-installed CPU torch)
+RUN pip install --no-cache-dir --no-deps leann && \
+    pip install --no-cache-dir numpy scipy scikit-learn tqdm
+
 # Copy requirements and install other Python packages
 COPY server/requirements.txt /app/server/requirements.txt
 RUN pip install --no-cache-dir -r /app/server/requirements.txt
-
-# Try to use pre-installed leann/torch if available, otherwise install CPU version
-RUN python3 -c "import leann" 2>/dev/null || \
-    pip install --no-cache-dir leann torch --index-url https://download.pytorch.org/whl/cpu
 
 # Copy application code
 COPY server/ /app/server/
