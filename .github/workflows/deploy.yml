@@ -22,7 +22,10 @@ jobs:
           script_stop: true
           script: |
             set -euo pipefail
-            echo "== connected =="; whoami || true; uname -a || true; date
+            echo "== Connected to VPS =="
+            whoami || true
+            uname -a || true
+            date
 
             # Detect docker compose command
             if docker compose version >/dev/null 2>&1; then
@@ -45,7 +48,7 @@ jobs:
             git fetch --all --prune
             git reset --hard origin/main
 
-            # Detect compose file
+            # Detect docker-compose file
             COMPOSE_FILE=""
             for f in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
               if [ -f "$f" ]; then COMPOSE_FILE="$f"; break; fi
@@ -55,7 +58,8 @@ jobs:
             fi
             $COMPOSE -f "$COMPOSE_FILE" config >/dev/null
 
-            # Generate .env file
+            # Generate .env file from GitHub secrets
+            echo "Generating .env file..."
             cat <<EOF > .env
             ADMIN_KEY=${{ secrets.ADMIN_KEY }}
             DATABASE_HOST=${{ secrets.DATABASE_HOST }}
@@ -70,12 +74,13 @@ jobs:
             POSTGRES_USER=${{ secrets.POSTGRES_USER }}
             EOF
 
-            # Optional: Clean up dangling containers/images before build
-            echo "Pruning old containers, images, and build cache..."
+            # Optional: prune old containers, images, and cache
+            echo "Pruning old containers, images, and volumes..."
             $COMPOSE -f "$COMPOSE_FILE" down --remove-orphans || true
             docker system prune -af --volumes || true
+            docker builder prune -af || true
 
-            # Build Docker images
+            # Build Docker images without cache
             echo "Building Docker images..."
             $COMPOSE -f "$COMPOSE_FILE" build --no-cache
 
@@ -83,20 +88,21 @@ jobs:
             echo "Starting services..."
             $COMPOSE -f "$COMPOSE_FILE" up -d --remove-orphans
 
-            # Wait for services
+            # Wait for services to become healthy
             echo "Waiting 30 seconds for services to initialize..."
             sleep 30
 
-            # Check service status
+            # Show service status
+            echo "Checking service status..."
             $COMPOSE -f "$COMPOSE_FILE" ps || true
 
             # Build LEANN index
             echo "Building LEANN index from documents..."
             $COMPOSE -f "$COMPOSE_FILE" exec -T backend python3 /app/src/utils/leann_converter.py || true
 
-            # Final cleanup: remove unused images and cache
-            echo "Final cleanup of Docker images and cache..."
+            # Final cleanup
+            echo "Cleaning up unused Docker images and cache..."
             docker image prune -af || true
             docker builder prune -af || true
 
-            echo "Deployment complete!"
+            echo "✅ Deployment complete!"
