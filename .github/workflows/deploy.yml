@@ -53,9 +53,12 @@ jobs:
             echo "Stopping old containers..."
             docker compose down
 
-            # Clean up to free memory before building
-            echo "Cleaning up old images to free memory..."
+            # Aggressive cleanup to free disk space and memory
+            echo "Pruning all unused Docker resources..."
+            docker container prune -f || true
             docker image prune -af || true
+            docker volume prune -f || true
+            docker system prune -af --volumes || true
 
             # Build Docker images with reduced parallelism to avoid OOM
             echo "Building Docker images (low memory mode)..."

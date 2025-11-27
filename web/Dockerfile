@@ -22,7 +22,7 @@ FROM nginx:alpine
 RUN apk add --no-cache bash
 
 # Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/build /usr/share/nginx/html
 
 # Create nginx templates directory
 RUN mkdir -p /etc/nginx/templates
