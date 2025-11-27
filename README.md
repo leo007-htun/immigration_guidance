@@ -102,10 +102,10 @@ ORG_ID=org-...           # Optional
 JWT_SECRET_KEY=your-secret-key
 
 # Database (Docker defaults)
-DATABASE_HOST=postgres
-DATABASE_USER=useradmin
-DATABASE_PASSWORD=userdb1234
-DATABASE_NAME=userdb
+DATABASE_HOST=
+DATABASE_USER=
+DATABASE_PASSWORD=
+DATABASE_NAME=
 ```
 
 ### Chat Configuration
