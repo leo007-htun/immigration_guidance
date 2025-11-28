@@ -1,9 +1,10 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "build",
-  "installCommand": "npm install",
-  "framework": null,
-  "rootDirectory": "web",
+  "functions": {
+    "api/**/*.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
   "rewrites": [
     {
       "source": "/(.*)",
@@ -20,14 +21,5 @@
         }
       ]
     }
-  ],
-  "env": {
-    "VITE_API_URL": "/api",
-    "BACKEND_URL": "http://87.106.110.70:3001"
-  },
-  "build": {
-    "env": {
-      "VITE_API_URL": "/api"
-    }
-  }
+  ]
 }
