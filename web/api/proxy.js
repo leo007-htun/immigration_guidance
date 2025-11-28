@@ -1,12 +1,24 @@
 const BACKEND_URL = process.env.BACKEND_URL || 'http://87.106.110.70:3001';
 
 export default async function handler(req, res) {
-  // Extract the API path from the request
-  const path = Array.isArray(req.query.path)
-    ? req.query.path.join('/')
-    : req.query.path || '';
+  // Extract the API path from the URL
+  // The rewrite sends all /api/* to /api/proxy, so we need to extract the original path
+  let path = '';
 
-  const fullUrl = `${BACKEND_URL}/api/${path}${req.url.includes('?') ? '?' + req.url.split('?')[1] : ''}`;
+  // Try to get path from the original URL (before rewrite)
+  const originalUrl = req.headers['x-vercel-proxied-for'] || req.url;
+
+  if (originalUrl.startsWith('/api/')) {
+    // Remove /api/ prefix to get the backend path
+    path = originalUrl.substring(5).split('?')[0];
+  } else if (req.query.path) {
+    // Fallback to query parameter if available
+    path = Array.isArray(req.query.path) ? req.query.path.join('/') : req.query.path;
+  }
+
+  // Build query string if present
+  const queryString = req.url.includes('?') ? '?' + req.url.split('?')[1] : '';
+  const fullUrl = `${BACKEND_URL}/api/${path}${queryString}`;
 
   try {
     // Set CORS headers
