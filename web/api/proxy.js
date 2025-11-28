@@ -1,5 +1,15 @@
 const BACKEND_URL = process.env.BACKEND_URL || 'http://87.106.110.70:3001';
 
+// Helper to parse multipart form data
+async function getRawBody(req) {
+  return new Promise((resolve, reject) => {
+    const chunks = [];
+    req.on('data', (chunk) => chunks.push(chunk));
+    req.on('end', () => resolve(Buffer.concat(chunks)));
+    req.on('error', reject);
+  });
+}
+
 export default async function handler(req, res) {
   // Extract the API path from the URL
   // The rewrite sends all /api/* to /api/proxy, so we need to extract the original path
@@ -36,13 +46,21 @@ export default async function handler(req, res) {
     const options = {
       method: req.method,
       headers: {
-        'Content-Type': 'application/json',
         ...(req.headers.authorization && { 'Authorization': req.headers.authorization }),
       },
     };
 
-    // Add body for non-GET/HEAD requests
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+    // Handle different content types
+    const requestContentType = req.headers['content-type'] || '';
+
+    if (requestContentType.includes('multipart/form-data')) {
+      // For file uploads, get raw body and forward with proper headers
+      const rawBody = await getRawBody(req);
+      options.body = rawBody;
+      options.headers['Content-Type'] = requestContentType; // Preserve boundary
+    } else if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
+      // For JSON requests
+      options.headers['Content-Type'] = 'application/json';
       options.body = JSON.stringify(req.body);
     }
 
@@ -50,10 +68,10 @@ export default async function handler(req, res) {
     const response = await fetch(fullUrl, options);
 
     // Parse response
-    const contentType = response.headers.get('content-type');
+    const responseContentType = response.headers.get('content-type');
     let data;
 
-    if (contentType && contentType.includes('application/json')) {
+    if (responseContentType && responseContentType.includes('application/json')) {
       data = await response.json();
     } else {
       data = await response.text();

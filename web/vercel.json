@@ -3,9 +3,9 @@
   "outputDirectory": "build",
   "installCommand": "npm install",
   "functions": {
-    "api/**/*.js": {
+    "api/proxy.js": {
       "memory": 1024,
-      "maxDuration": 10
+      "maxDuration": 30
     }
   },
   "build": {
