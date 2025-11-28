@@ -190,7 +190,7 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
       <footer className="backdrop-blur-md bg-white/5 border-t border-white/10 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-white/60 text-sm">
-            <p>© 2024 Immigration AI Assistant. All rights reserved.</p>
+            <p>© 2025 Immigration AI Assistant. All rights reserved.</p>
             <p className="mt-2">This service provides general information only and does not constitute legal advice.</p>
           </div>
         </div>
