@@ -15,7 +15,7 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hello! I'm your Legal AI Assistant powered by LEANN. I can answer questions based on indexed legal documents. How can I help you today?",
+      text: "Welcome 🤗! Share your case and I’ll deliver precise, rule-matched guidance instantly, \nTrust me! I'm smarter than you think 😉",
       sender: 'bot',
       timestamp: new Date(),
     },
