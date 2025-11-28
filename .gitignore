@@ -75,3 +75,5 @@ certbot/
 
 # Nginx configs (VPS specific)
 /etc/nginx/sites-enabled/backend
+
+.github/workflows/deploy.yml
