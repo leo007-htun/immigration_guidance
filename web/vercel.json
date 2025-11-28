@@ -22,5 +22,10 @@
   ],
   "env": {
     "VITE_API_URL": "http://87.106.110.70:3001/api"
+  },
+  "build": {
+    "env": {
+      "VITE_API_URL": "http://87.106.110.70:3001/api"
+    }
   }
 }
