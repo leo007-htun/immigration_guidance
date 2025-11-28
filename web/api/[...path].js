@@ -4,13 +4,18 @@
 export default async function handler(req, res) {
   const backendUrl = process.env.BACKEND_URL || 'http://87.106.110.70:3001';
 
-  // Get the full path from the request
-  const { path, ...queryParams } = req.query;
-  const apiPath = Array.isArray(path) ? path.join('/') : (path || '');
-  const url = `${backendUrl}/api/${apiPath}`;
+  // Get the path from URL - remove /api prefix
+  let apiPath = req.url.replace(/^\/api\/?/, '');
 
-  // Build query string excluding 'path' parameter
-  const queryString = new URLSearchParams(queryParams).toString();
+  // Remove query string from path
+  const queryIndex = apiPath.indexOf('?');
+  let queryString = '';
+  if (queryIndex !== -1) {
+    queryString = apiPath.substring(queryIndex + 1);
+    apiPath = apiPath.substring(0, queryIndex);
+  }
+
+  const url = `${backendUrl}/api/${apiPath}`;
   const fullUrl = queryString ? `${url}?${queryString}` : url;
 
   try {
