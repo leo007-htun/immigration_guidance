@@ -28,10 +28,7 @@ export default async function handler(req, res) {
       options.body = typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
     }
 
-    // Forward the request to the backend
-    const response = await fetch(fullUrl, options);
-
-    // Set CORS headers
+    // Set CORS headers first
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -42,12 +39,38 @@ export default async function handler(req, res) {
       return res.status(200).end();
     }
 
+    // Forward the request to the backend
+    const response = await fetch(fullUrl, options);
+
+    // Check if response is ok
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Backend error (${response.status}):`, errorText);
+      return res.status(response.status).json({
+        error: 'Backend error',
+        status: response.status,
+        message: errorText
+      });
+    }
+
     const contentType = response.headers.get('content-type');
 
     // Handle JSON response
     if (contentType && contentType.includes('application/json')) {
-      const data = await response.json();
-      return res.status(response.status).json(data);
+      const text = await response.text();
+      if (!text || text.trim() === '') {
+        return res.status(200).json({ message: 'Empty response from backend' });
+      }
+      try {
+        const data = JSON.parse(text);
+        return res.status(response.status).json(data);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError, 'Text:', text);
+        return res.status(500).json({
+          error: 'Invalid JSON from backend',
+          message: text.substring(0, 100)
+        });
+      }
     }
 
     // Handle text response
