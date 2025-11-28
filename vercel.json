@@ -14,8 +14,8 @@
   },
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "/api/proxy"
+      "source": "/api/(.*)",
+      "destination": "http://87.106.110.70:3001/api/$1"
     },
     {
       "source": "/(.*)",
