@@ -110,7 +110,7 @@ CREATE INDEX idx_chat_user_assistant ON chat_history(user_id, assistant_id);
 
 -- Short-term memory (temporary conversation context)
 CREATE TABLE short_term_memory (
-    memory_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    memory_id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     chat_id UUID REFERENCES chat_history(chat_id) ON DELETE SET NULL,
     processed_data JSONB NOT NULL,
@@ -140,7 +140,7 @@ CREATE INDEX idx_short_term_user_category ON short_term_memory(user_id, category
 
 -- Long-term memory (persistent important information)
 CREATE TABLE long_term_memory (
-    memory_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    memory_id TEXT PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     processed_data JSONB NOT NULL,
     importance_score DOUBLE PRECISION NOT NULL,
