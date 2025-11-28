@@ -1,8 +1,9 @@
 {
-  "buildCommand": "npm --prefix web run build",
-  "outputDirectory": "web/build",
-  "installCommand": "npm --prefix web install",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
   "framework": null,
+  "rootDirectory": "web",
   "rewrites": [
     {
       "source": "/(.*)",
