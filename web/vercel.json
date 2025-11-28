@@ -5,6 +5,10 @@
   "framework": null,
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
@@ -21,11 +25,12 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "http://87.106.110.70:3001/api"
+    "VITE_API_URL": "/api",
+    "BACKEND_URL": "http://87.106.110.70:3001"
   },
   "build": {
     "env": {
-      "VITE_API_URL": "http://87.106.110.70:3001/api"
+      "VITE_API_URL": "/api"
     }
   }
 }

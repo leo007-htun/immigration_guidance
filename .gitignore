@@ -62,3 +62,16 @@ temp/
 # Build artifacts
 web/dist/
 server/__pycache__/
+
+# Backend logs and runtime files
+backend.log
+nohup.out
+
+# SSL certificates
+*.pem
+*.key
+*.crt
+certbot/
+
+# Nginx configs (VPS specific)
+/etc/nginx/sites-enabled/backend
