@@ -47,10 +47,11 @@ export function LandingPage({ onGetStarted, onSignIn }: LandingPageProps) {
               <Scale className="w-16 h-16 text-white" />
             </div>
             <h1 className="text-white mb-6 text-5xl lg:text-6xl">
-              Your AI-Powered Immigration Assistant
+              Your AI-Powered UK Immigration Assistant
             </h1>
-            <p className="text-white/70 text-xl mb-8 max-w-3xl mx-auto">
-              Get instant answers to your immigration questions with our intelligent AI assistant. 
+            <p className="text-white/70 text-xl mb-8 max-w-3xl mx-auto leading-relaxed">
+              Need clarity on UK immigration law? Tired of slow advice and unclear answers?<br />
+              Our AI gives you crystal-clear guidance in seconds.<br />
               Navigate the complex immigration process with confidence and clarity.
             </p>
             <div className="flex gap-4 justify-center">
