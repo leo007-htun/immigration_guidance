@@ -1,7 +1,7 @@
 {
   "buildCommand": "npm --prefix web run build",
   "outputDirectory": "web/build",
-  "installCommand": "npm --prefix web ci",
+  "installCommand": "npm --prefix web install",
   "framework": null,
   "rewrites": [
     {
