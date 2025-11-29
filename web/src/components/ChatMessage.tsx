@@ -19,6 +19,65 @@ interface ChatMessageProps {
   message: Message;
 }
 
+function formatBotMessage(text: string) {
+  // Split by numbered sections (e.g., "1. Title", "2. Title")
+  const sections = text.split(/(?=\d+\.\s+[A-Z])/);
+
+  return (
+    <>
+      {sections.map((section, idx) => {
+        // Check if this section starts with a number
+        const match = section.match(/^(\d+)\.\s+([^\n]+)([\s\S]*)/);
+
+        if (match) {
+          const [, number, title, content] = match;
+
+          // Split content into bullet points (lines starting with -)
+          const lines = content.trim().split('\n').filter(line => line.trim());
+          const bulletPoints: string[] = [];
+          const regularText: string[] = [];
+
+          lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('-')) {
+              bulletPoints.push(trimmed.substring(1).trim());
+            } else if (trimmed) {
+              regularText.push(trimmed);
+            }
+          });
+
+          return (
+            <div key={idx} className="mb-4">
+              <h3 className="text-white font-bold mb-2">
+                {number}. {title.trim()}
+              </h3>
+              <div className="pl-4 space-y-2">
+                {regularText.map((text, i) => (
+                  <p key={`text-${i}`} className="text-white/90">{text}</p>
+                ))}
+                {bulletPoints.length > 0 && (
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    {bulletPoints.map((point, i) => (
+                      <li key={`bullet-${i}`} className="text-white/90">{point}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          );
+        }
+
+        // Regular text (intro paragraph)
+        return section.trim() ? (
+          <p key={idx} className="text-white/90 mb-4 whitespace-pre-wrap">
+            {section.trim()}
+          </p>
+        ) : null;
+      })}
+    </>
+  );
+}
+
 export function ChatMessage({ message }: ChatMessageProps) {
   const isBot = message.sender === 'bot';
 
@@ -44,7 +103,9 @@ export function ChatMessage({ message }: ChatMessageProps) {
             : 'bg-[#334155]/30 border-white/30 rounded-tr-sm'
         }`}
       >
-        <p className="text-white/90 whitespace-pre-wrap">{message.text}</p>
+        {isBot ? formatBotMessage(message.text) : (
+          <p className="text-white/90 whitespace-pre-wrap">{message.text}</p>
+        )}
 
         {/* Sources */}
         {message.sources && message.sources.length > 0 && (
