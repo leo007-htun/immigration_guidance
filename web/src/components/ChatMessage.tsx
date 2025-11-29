@@ -20,45 +20,63 @@ interface ChatMessageProps {
 }
 
 function formatBotMessage(text: string) {
-  // Split by numbered sections (e.g., "1. Title", "2. Title")
-  const sections = text.split(/(?=\d+\.\s+[A-Z])/);
+  // Split by numbered sections (e.g., "1. **Title**" or "1. Title")
+  const sections = text.split(/(?=\d+\.\s+\*?\*?[A-Z])/);
 
   return (
-    <>
+    <div className="space-y-4">
       {sections.map((section, idx) => {
-        // Check if this section starts with a number
-        const match = section.match(/^(\d+)\.\s+([^\n]+)([\s\S]*)/);
+        const trimmedSection = section.trim();
+        if (!trimmedSection) return null;
 
-        if (match) {
-          const [, number, title, content] = match;
+        // Check if this section starts with a numbered header
+        const headerMatch = trimmedSection.match(/^(\d+)\.\s+\*?\*?([^*\n]+)\*?\*?([\s\S]*)/);
 
-          // Split content into bullet points (lines starting with -)
-          const lines = content.trim().split('\n').filter(line => line.trim());
+        if (headerMatch) {
+          const [, number, title, content] = headerMatch;
+
+          // Process the content to find bullet points and paragraphs
+          const lines = content.split('\n').map(l => l.trim()).filter(l => l);
           const bulletPoints: string[] = [];
-          const regularText: string[] = [];
+          const paragraphs: string[] = [];
+          let currentParagraph = '';
 
           lines.forEach(line => {
-            const trimmed = line.trim();
-            if (trimmed.startsWith('-')) {
-              bulletPoints.push(trimmed.substring(1).trim());
-            } else if (trimmed) {
-              regularText.push(trimmed);
+            if (line.startsWith('-')) {
+              // Save any accumulated paragraph
+              if (currentParagraph) {
+                paragraphs.push(currentParagraph);
+                currentParagraph = '';
+              }
+              bulletPoints.push(line.substring(1).trim());
+            } else if (line) {
+              // Accumulate paragraph text
+              currentParagraph += (currentParagraph ? ' ' : '') + line;
             }
           });
 
+          // Don't forget the last paragraph
+          if (currentParagraph) {
+            paragraphs.push(currentParagraph);
+          }
+
           return (
-            <div key={idx} className="mb-4">
-              <h3 className="text-white font-bold mb-2">
+            <div key={idx} className="mb-6">
+              <h3 className="text-white font-bold text-lg mb-3">
                 {number}. {title.trim()}
               </h3>
               <div className="pl-4 space-y-2">
-                {regularText.map((text, i) => (
-                  <p key={`text-${i}`} className="text-white/90">{text}</p>
+                {paragraphs.map((para, i) => (
+                  <p key={`para-${i}`} className="text-white/90 leading-relaxed">
+                    {para}
+                  </p>
                 ))}
                 {bulletPoints.length > 0 && (
-                  <ul className="list-disc list-inside space-y-1 ml-2">
+                  <ul className="list-disc list-outside space-y-2 ml-6 mt-3">
                     {bulletPoints.map((point, i) => (
-                      <li key={`bullet-${i}`} className="text-white/90">{point}</li>
+                      <li key={`bullet-${i}`} className="text-white/90 leading-relaxed">
+                        {point}
+                      </li>
                     ))}
                   </ul>
                 )}
@@ -67,14 +85,14 @@ function formatBotMessage(text: string) {
           );
         }
 
-        // Regular text (intro paragraph)
-        return section.trim() ? (
-          <p key={idx} className="text-white/90 mb-4 whitespace-pre-wrap">
-            {section.trim()}
+        // Regular text (intro/outro paragraph)
+        return (
+          <p key={idx} className="text-white/90 leading-relaxed">
+            {trimmedSection}
           </p>
-        ) : null;
+        );
       })}
-    </>
+    </div>
   );
 }
 
