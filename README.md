@@ -1,6 +1,8 @@
 # LEANN Immigration Chatbot
 
 A multi-user immigration chatbot system with admin dashboard, built with FastAPI, React, and LEANN RAG technology.
+As a immigrant in UK, legal fees are always a headache, especially paying for caseworkers and they can't even copy paste me name and D.O.B
+This is the reason I created it, 200£ per hour and still can't copy paste my name.
 
 ## ✨ Features
 
