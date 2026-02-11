@@ -186,7 +186,6 @@ GitHub Actions workflow included (`.github/workflows/deploy.yml`).
 - `VPS_SSH_KEY`: SSH private key
 - `APP_PATH`: Application path on VPS (default: `/root/leann`)
 
-Push to `main` branch to trigger auto-deployment.
 
 ## 🛠️ Maintenance
 
@@ -227,10 +226,6 @@ docker-compose exec backend python3 /app/src/utils/leann_converter.py
 - Verify PDFs in `./data/` directory
 - Check permissions: `ls -la data/`
 - Check logs: `docker-compose logs backend`
-
-## 📝 License
-
-[Your License Here]
 
 ## 🤝 Contributing
 
