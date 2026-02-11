@@ -1,3 +1,7 @@
+<img width="1400" height="895" alt="image" src="https://github.com/user-attachments/assets/24414179-0259-4726-9498-383ce73f829a" />
+
+
+
 # LEANN Immigration Chatbot
 
 A multi-user immigration chatbot system with admin dashboard, built with FastAPI, React, and LEANN RAG technology.
